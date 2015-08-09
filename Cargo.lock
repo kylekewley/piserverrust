@@ -22,7 +22,7 @@ dependencies = [
 [[package]]
 name = "piservercore"
 version = "0.0.1"
-source = "git+https://github.com/kylekewley/piservercore.git#1a8477743c46c7cac94f2b252691435665d49766"
+source = "git+https://github.com/kylekewley/piservercore.git#279cfd7fb5699412f516599f0a720d3407b8f51f"
 dependencies = [
  "capnp 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
