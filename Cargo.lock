@@ -7,8 +7,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bufstream"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "byteorder"
-version = "0.3.11"
+version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -16,14 +21,20 @@ name = "capnp"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "byteorder 0.3.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "byteorder 0.3.13 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "piservercore"
 version = "0.0.1"
-source = "git+https://github.com/kylekewley/piservercore.git#279cfd7fb5699412f516599f0a720d3407b8f51f"
+source = "git+https://github.com/kylekewley/piservercore.git#d08a5af0f7862356aff3b5ffcc5e7b9ec39e1659"
 dependencies = [
- "capnp 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bufstream 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.16 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "rustc-serialize"
+version = "0.3.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 

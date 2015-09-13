@@ -1,5 +1,4 @@
 extern crate piservercore;
-extern crate capnp;
 
 use std::thread;
 use std::sync::{Arc, Mutex};
@@ -7,14 +6,13 @@ use std::io::{self, Error, ErrorKind};
 use std::net::{TcpListener, TcpStream, ToSocketAddrs};
 use std::cell::RefCell;
 
-use capnp::message::{MessageReader, ReaderOptions, MallocMessageBuilder, MessageBuilder};
-
 use self::piservercore::messenger::Messenger;
+use self::piservercore::message::Message;
 use self::piservercore::parser::Parser;
 
 pub struct server {
     port: u16,
-    clients: Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<MallocMessageBuilder>>>)>>>,
+    clients: Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<Message>>>)>>>,
     parser: Arc<Parser>,
     current_id: u32
 }
@@ -29,7 +27,7 @@ impl server {
         }
     }
 
-    fn handle_client(clients: &mut Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<MallocMessageBuilder>>>)>>>, client_id: u32, mut parser: Arc<Parser>, stream: TcpStream) {
+    fn handle_client(clients: &mut Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<Message>>>)>>>, client_id: u32, mut parser: Arc<Parser>, stream: TcpStream) {
         let mut client = Messenger::with_connection(stream, parser).unwrap();
 
         let mut oqueue = client.get_oqueue();
