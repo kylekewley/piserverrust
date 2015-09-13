@@ -5,6 +5,3 @@ authors = ["Kyle Kewley <kylek61294@gmail.com>"]
 
 [dependencies.piservercore]
 git = "https://github.com/kylekewley/piservercore.git"
-
-[dependencies]
-capnp = "0.2.4"
