@@ -9,6 +9,6 @@ use self::piservercore::parser::Parser;
 fn main() {
     let parser = Arc::new(Parser::new());
 
-    let mut s = server::with_port(1024u16, parser);
+    let mut s = server::with_port(10150u16, parser);
     s.run_forever();
 }

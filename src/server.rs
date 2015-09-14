@@ -62,8 +62,8 @@ impl server {
         // accept connections and process them, spawning a new thread for each one
         for stream in listener.incoming() {
             match stream {
-                println!("New Connection");
                 Ok(stream) => {
+                    println!("New Connection");
                     let mut clients = self.clients.clone();
                     let mut parser = self.parser.clone();
 
