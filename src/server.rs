@@ -57,9 +57,12 @@ impl server {
         // Create a tcplistener on the set port and listen for messages
         let listener = try!(TcpListener::bind(("127.0.0.1", self.port)));
 
+        println!("Listening on port {}", self.port);
+
         // accept connections and process them, spawning a new thread for each one
         for stream in listener.incoming() {
             match stream {
+                println!("New Connection");
                 Ok(stream) => {
                     let mut clients = self.clients.clone();
                     let mut parser = self.parser.clone();
