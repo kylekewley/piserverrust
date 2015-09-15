@@ -1,14 +1,12 @@
-extern crate piservercore;
-
 use std::thread;
 use std::sync::{Arc, Mutex};
 use std::io::{self, Error, ErrorKind};
-use std::net::{TcpListener, TcpStream, ToSocketAddrs};
+use std::net::{Shutdown, TcpListener, TcpStream, ToSocketAddrs};
 use std::cell::RefCell;
 
-use self::piservercore::messenger::Messenger;
-use self::piservercore::message::Message;
-use self::piservercore::parser::Parser;
+use messenger::Messenger;
+use message::Message;
+use parser::Parser;
 
 pub struct server {
     port: u16,
@@ -28,6 +26,7 @@ impl server {
     }
 
     fn handle_client(clients: &mut Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<Message>>>)>>>, client_id: u32, mut parser: Arc<Parser>, stream: TcpStream) {
+        let stream_clone = stream.try_clone().unwrap();
         let mut client = Messenger::with_connection(stream, parser).unwrap();
 
         let mut oqueue = client.get_oqueue();
@@ -36,7 +35,9 @@ impl server {
 
         client.handle_client_stream();
 
+        println!("Client disconnected");
 
+        stream_clone.shutdown(Shutdown::Both);
         // Client disconnected. Remove from clients list
         match clients.lock() {
             Ok(mut guard) => {
@@ -73,6 +74,7 @@ impl server {
                     thread::spawn(move|| {
                         // connection succeeded.
                         server::handle_client(&mut clients, client_id, parser, stream);
+                        println!("Exiting thread");
                     });
                 }
                 Err(e) => { /* connection failed */ }

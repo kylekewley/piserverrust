@@ -3,5 +3,7 @@ name = "piserverrust"
 version = "0.0.1"
 authors = ["Kyle Kewley <kylek61294@gmail.com>"]
 
-[dependencies.piservercore]
-git = "https://github.com/kylekewley/piservercore.git"
+[dependencies]
+rustc-serialize = "0.3.16"
+
+bufstream = "0.1.1"
