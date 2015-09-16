@@ -55,27 +55,16 @@ impl Messenger {
             Messenger::read_message_size(istream)
         });
 
-        // Create a buffer so we can read the message
-        let buf_read = BufReader::new(istream);
+        // Create a take with the total number of bytes needed
+        let mut stream = istream.take(size as u64);
 
-        // Track the remaining bytes for the full message
-        let mut remaining_size = size;
-        let mut stream = buf_read.take(size as u64);
+        let mut tmp = Vec::new();
+        let read_len = try!(stream.read_to_end(&mut tmp)) as u64;
 
-        let mut recv_str = String::new();
-        while remaining_size > 0 {
+        // Concat the new string to the old
+        let recv_str = String::from_utf8(tmp).unwrap();
 
-            let mut tmp = String::new();
-            let read_len = try!(stream.read_to_string(&mut tmp));
-
-            // Concat the new string to the old
-            recv_str = recv_str + &tmp;
-
-            remaining_size -= tmp.len() as u64;
-        }
-
-
-        if remaining_size > 0 {
+        if read_len < size {
             return Err(Error::new(ErrorKind::InvalidInput, "Not enough bytes in the stream"));
         }
 
@@ -85,13 +74,16 @@ impl Messenger {
     /// Read the first PREFIX_SIZE bytes from the stream interpreted as big endian
     /// Return the message size, or an error if there is an io error.
     pub fn read_message_size(stream: &mut Read) -> Result<u64> {
+        println!("Reading message size");
         let mut stream = stream.take(PREFIX_SIZE as u64);
 
         // Shift each byte into a u64 up to PREFIX_SIZE bytes
         let mut length: u64 = 0;
 
         let mut bytes: Vec<u8> = Vec::new();
+        println!("Attempting take read");
         let byte_count = stream.read_to_end(&mut bytes).unwrap();
+        println!("Read to end of take");
 
         bytes.reverse();
 
@@ -100,8 +92,11 @@ impl Messenger {
             length |= byte as u64;
         }
 
+        println!("Message length read: {}", length);
+
 
         if byte_count != PREFIX_SIZE {
+            println!("Error reading message length");
             return Err(Error::new(ErrorKind::InvalidInput, "Couldn't read message length from stream"));
         }
 
@@ -137,10 +132,6 @@ impl Messenger {
         queue.push(message);
     }
 
-    pub fn shutdown(&self) {
-
-    }
-
     /// This call loops forever, creating a new thread to handle reading from
     /// the stream. The blocking thread will handle messages as they come in, 
     /// and write new messages when they are added to the queue.
@@ -152,14 +143,12 @@ impl Messenger {
         // Spawn a new thread to listen to incoming messages
         thread::spawn(move|| {
             loop {
-                println!("Loop 1");
                 let m = Messenger::recv_message(&mut istream).unwrap();
                 tx.send(m).unwrap();
             }
         });
 
         loop {
-            println!("Loop 2");
             {
                 // Send the first item in the queue
                 let message = {
@@ -193,12 +182,11 @@ impl Messenger {
                     }
                 },
                 Err(_) => {
+                    println!("Error reading message");
                     return Err(Error::new(ErrorKind::Other, "Error receiving message"));
                 }
             }
         }
-
-        println!("Exiting without panic");
     }
 }
 #[cfg(test)]

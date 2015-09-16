@@ -26,7 +26,6 @@ impl server {
     }
 
     fn handle_client(clients: &mut Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<Message>>>)>>>, client_id: u32, mut parser: Arc<Parser>, stream: TcpStream) {
-        let stream_clone = stream.try_clone().unwrap();
         let mut client = Messenger::with_connection(stream, parser).unwrap();
 
         let mut oqueue = client.get_oqueue();
@@ -37,7 +36,6 @@ impl server {
 
         println!("Client disconnected");
 
-        stream_clone.shutdown(Shutdown::Both);
         // Client disconnected. Remove from clients list
         match clients.lock() {
             Ok(mut guard) => {
@@ -66,7 +64,7 @@ impl server {
                 Ok(stream) => {
                     println!("New Connection");
                     let mut clients = self.clients.clone();
-                    let mut parser = self.parser.clone();
+                    let parser = self.parser.clone();
 
                     let client_id = self.current_id;
                     self.current_id += 1;
