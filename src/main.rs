@@ -8,6 +8,6 @@ use self::piserverrust::parser::Parser;
 fn main() {
     let parser = Arc::new(Parser::new());
 
-    let mut s = server::with_port(10140u16, parser);
+    let mut s = server::with_port(10142u16, parser);
     s.run_forever();
 }

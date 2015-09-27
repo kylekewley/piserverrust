@@ -7,11 +7,11 @@
 use rustc_serialize::json;
 
 use std::io::{self, Write, Read, Result, Error, ErrorKind, BufReader, BufRead, BufWriter};
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{TryRecvError, channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::vec::Vec;
 use std::thread;
-use std::net::TcpStream;
+use std::net::{TcpStream, Shutdown};
 
 use parser::Parser;
 
@@ -61,8 +61,10 @@ impl Messenger {
         let mut tmp = Vec::new();
         let read_len = try!(stream.read_to_end(&mut tmp)) as u64;
 
-        // Concat the new string to the old
+        println!("Vec length: {}", tmp.len());
         let recv_str = String::from_utf8(tmp).unwrap();
+
+        println!("Message read with length: {} {}", recv_str.len(), recv_str);
 
         if read_len < size {
             return Err(Error::new(ErrorKind::InvalidInput, "Not enough bytes in the stream"));
@@ -85,7 +87,7 @@ impl Messenger {
         let byte_count = stream.read_to_end(&mut bytes).unwrap();
         println!("Read to end of take");
 
-        bytes.reverse();
+        // bytes.reverse();
 
         for byte in bytes {
             length = length<<8;
@@ -110,7 +112,7 @@ impl Messenger {
         let mut size = size;
         let mask = 0x000000FFu32;
 
-        for i in 0..PREFIX_SIZE {
+        for i in (0..PREFIX_SIZE).rev() {
             // Add each byte to the buffer
             buffer[i] = (size & mask) as u8;
             size = size >> 8;
@@ -141,12 +143,19 @@ impl Messenger {
         let mut istream = self.istream.try_clone().unwrap();
 
         // Spawn a new thread to listen to incoming messages
-        thread::spawn(move|| {
+        let handle = thread::spawn(move|| {
             loop {
                 let m = Messenger::recv_message(&mut istream).unwrap();
-                tx.send(m).unwrap();
+                match tx.send(m) {
+                    Ok(()) => {},
+                    Err(e) => {
+                        println!("Error: {}", e);
+                    }
+                }
             }
         });
+
+        let mut errorMessage = String::new();
 
         loop {
             {
@@ -164,7 +173,8 @@ impl Messenger {
                                 Messenger::send_message(&mut *guard, &mut m).unwrap();
                             },
                             Err(_) => { 
-                                return Err(Error::new(ErrorKind::Other, "ostream mutex poisoned"));
+                                errorMessage.push_str("ostream mutex poisoned\n");
+                                break;
                             }
                         }
                     },
@@ -178,15 +188,26 @@ impl Messenger {
                     let message: Message = json::decode(&r).unwrap();
                     let response = self.parser.parse_message(&message);
                     if response.is_some() {
+                        println!("Sending response");
                         self.add_to_send_queue(response.unwrap());
                     }
                 },
-                Err(_) => {
-                    println!("Error reading message");
-                    return Err(Error::new(ErrorKind::Other, "Error receiving message"));
+                Err(TryRecvError::Empty) => {},
+                Err(e) => {
+                    println!("Error reading message: {}", e);
+                    errorMessage.push_str("Error receiving message\n");
+                    break;
                 }
             }
         }
+
+        self.istream.shutdown(Shutdown::Both);
+        handle.join();
+        if errorMessage.len() != 0 {
+            return Err(Error::new(ErrorKind::Other, errorMessage));
+        }
+
+        Ok(())
     }
 }
 #[cfg(test)]
