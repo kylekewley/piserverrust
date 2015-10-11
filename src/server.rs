@@ -54,7 +54,7 @@ impl server {
 
     pub fn run_forever(&mut self) -> Result<(), io::Error> {
         // Create a tcplistener on the set port and listen for messages
-        let listener = try!(TcpListener::bind(("127.0.0.1", self.port)));
+        let listener = try!(TcpListener::bind(("0.0.0.0", self.port)));
 
         println!("Listening on port {}", self.port);
 
