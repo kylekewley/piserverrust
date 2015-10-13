@@ -9,16 +9,16 @@ use messenger::Messenger;
 use message::Message;
 use parser::Parser;
 
-pub struct server {
+pub struct Server {
     port: u16,
     clients: Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<Message>>>)>>>,
     parser: Arc<Parser>,
     current_id: u32
 }
 
-impl server {
-    pub fn with_port(port: u16, parser: Arc<Parser>) -> server {
-        server {
+impl Server {
+    pub fn with_port(port: u16, parser: Arc<Parser>) -> Server {
+        Server {
             port: port,
             clients: Arc::new(Mutex::new(Vec::new())),
             parser: parser,
@@ -39,14 +39,14 @@ impl server {
         }
     }
 
-    fn handle_client(clients: &mut Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<Message>>>)>>>, client_id: u32, mut parser: Arc<Parser>, stream: TcpStream) {
+    fn handle_client(clients: &mut Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<Message>>>)>>>, client_id: u32, parser: Arc<Parser>, stream: TcpStream) {
         let mut client = Messenger::with_connection(stream, parser).unwrap();
 
-        let mut oqueue = client.get_oqueue();
+        let oqueue = client.get_oqueue();
 
         clients.lock().unwrap().push((client_id, oqueue));
 
-        client.handle_client_stream();
+        let client_result = client.handle_client_stream();
 
         println!("Client disconnected");
 
@@ -62,8 +62,12 @@ impl server {
                     }
                 }
             },
-            Err(e) => {}
+            Err(e) => {
+                println!("Error: {}", e);
+            }
         }
+
+        client_result.unwrap();
     }
 
     pub fn run_forever(&mut self) -> Result<(), io::Error> {
@@ -85,11 +89,14 @@ impl server {
 
                     thread::spawn(move|| {
                         // connection succeeded.
-                        server::handle_client(&mut clients, client_id, parser, stream);
+                        Server::handle_client(&mut clients, client_id, parser, stream);
                         println!("Exiting thread");
                     });
                 }
-                Err(e) => { /* connection failed */ }
+                Err(e) => {
+                    /* connection failed */ 
+                    println!("Error: {}", e);
+                }
             }
         }
 

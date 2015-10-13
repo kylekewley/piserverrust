@@ -155,7 +155,7 @@ impl Messenger {
             }
         });
 
-        let mut errorMessage = String::new();
+        let mut error_message = String::new();
 
         loop {
             {
@@ -173,7 +173,7 @@ impl Messenger {
                                 Messenger::send_message(&mut *guard, &mut m).unwrap();
                             },
                             Err(_) => { 
-                                errorMessage.push_str("ostream mutex poisoned\n");
+                                error_message.push_str("ostream mutex poisoned\n");
                                 break;
                             }
                         }
@@ -195,16 +195,16 @@ impl Messenger {
                 Err(TryRecvError::Empty) => {},
                 Err(e) => {
                     println!("Error reading message: {}", e);
-                    errorMessage.push_str("Error receiving message\n");
+                    error_message.push_str("Error receiving message\n");
                     break;
                 }
             }
         }
 
-        self.istream.shutdown(Shutdown::Both);
-        handle.join();
-        if errorMessage.len() != 0 {
-            return Err(Error::new(ErrorKind::Other, errorMessage));
+        let _ = self.istream.shutdown(Shutdown::Both);
+        let _ = handle.join();
+        if error_message.len() != 0 {
+            return Err(Error::new(ErrorKind::Other, error_message));
         }
 
         Ok(())
