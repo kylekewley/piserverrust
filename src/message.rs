@@ -15,6 +15,17 @@ pub struct Message {
 
 static GLOBAL_MESSAGE_ID: AtomicUsize = ATOMIC_USIZE_INIT;
 
+impl Clone for Message {
+    fn clone(&self) -> Self {
+        let mut clone = Message::new();
+        clone.message = self.message.clone();
+        clone.ack = self.ack;
+        clone.p_id = self.p_id;
+
+        return clone;
+    }
+}
+
 impl Message {
     pub fn new() -> Message {
         Message {

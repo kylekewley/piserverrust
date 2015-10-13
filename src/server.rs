@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::io::{self, Error, ErrorKind};
 use std::net::{Shutdown, TcpListener, TcpStream, ToSocketAddrs};
 use std::cell::RefCell;
+use std::ops::Deref;
 
 use messenger::Messenger;
 use message::Message;
@@ -22,6 +23,19 @@ impl server {
             clients: Arc::new(Mutex::new(Vec::new())),
             parser: parser,
             current_id: 0
+        }
+    }
+
+    pub fn broadcast_message(&mut self, message: Message) {
+        {
+            let clients = self.clients.lock().unwrap();
+            let clients = clients.deref();
+
+            for client in clients {
+                let ref queue = client.1;
+                let mut queue = queue.lock().unwrap();
+                queue.push(message.clone());
+            }
         }
     }
 
