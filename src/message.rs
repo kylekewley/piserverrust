@@ -13,7 +13,10 @@ pub struct Message {
     message: String, // The actual message payload
 }
 
+const REPLY_MESSAGE_PARSER_ID: u32 = 0;
+
 static GLOBAL_MESSAGE_ID: AtomicUsize = ATOMIC_USIZE_INIT;
+
 
 impl Clone for Message {
     fn clone(&self) -> Self {
@@ -33,6 +36,16 @@ impl Message {
             m_id: Message::next_id(),
             p_id: 0,
             message: String::new(),
+        }
+    }
+
+    pub fn with_reply<T: Encodable>(message: &T, message_id: u32) -> Message {
+        let encoded_message = json::encode(&message).unwrap();
+        Message {
+            ack: false,
+            m_id: message_id,
+            p_id: REPLY_MESSAGE_PARSER_ID,
+            message: encoded_message,
         }
     }
 

@@ -10,14 +10,18 @@ use std::sync::{Arc, Mutex};
 use message::Message;
 
 
-pub struct Parser {
-    parsers: HashMap<u32, Box<Fn(&String) -> Option<Message>+Send+Sync>>
+pub trait Parser {
+    fn parse_message(&self, message: &String) -> Option<Message>;
+}
+
+pub struct ParserManager<'a> {
+    parsers: HashMap<u32, Box<Parser+Send+Sync + 'a>>
 }
 
 
-impl Parser {
-    pub fn new() -> Parser {
-        Parser { parsers: HashMap::new() }
+impl <'a>ParserManager<'a> {
+    pub fn new() -> ParserManager<'a> {
+        ParserManager { parsers: HashMap::new() }
     }
 
     pub fn parse_message(&self, message: &Message) -> Option<Message> {
@@ -26,7 +30,7 @@ impl Parser {
 
         if f.is_some() {
             let f = f.unwrap();
-            let result = f(message.get_message());
+            let result = f.parse_message(message.get_message());
 
             return result;
         }
@@ -42,14 +46,13 @@ impl Parser {
       * ID
       */
 
-    pub fn register_parser(&mut self, parser_id: u32, parser: Box<Fn(&String) ->
-                           Option<Message>+Send+Sync>) -> bool {
+    pub fn register_parser<T: 'a+Parser+Send+Sync>(&mut self, parser_id: u32, parser: T) -> bool {
 
         if self.parsers.contains_key(&parser_id) {
             return false;
         }
 
-        self.parsers.insert(parser_id, parser);
+        self.parsers.insert(parser_id, Box::new(parser));
 
         true
     }

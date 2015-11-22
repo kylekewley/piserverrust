@@ -7,17 +7,17 @@ use std::ops::Deref;
 
 use messenger::Messenger;
 use message::Message;
-use parser::Parser;
+use parser::ParserManager;
 
 pub struct Server {
     port: u16,
     clients: Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<Message>>>)>>>,
-    parser: Arc<Parser>,
+    parser: Arc<ParserManager<'static>>,
     current_id: u32
 }
 
 impl Server {
-    pub fn with_port(port: u16, parser: Arc<Parser>) -> Server {
+    pub fn with_port(port: u16, parser: Arc<ParserManager<'static>>) -> Server {
         Server {
             port: port,
             clients: Arc::new(Mutex::new(Vec::new())),
@@ -39,7 +39,7 @@ impl Server {
         }
     }
 
-    fn handle_client(clients: &mut Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<Message>>>)>>>, client_id: u32, parser: Arc<Parser>, stream: TcpStream) {
+    fn handle_client(clients: &mut Arc<Mutex<Vec<(u32, Arc<Mutex<Vec<Message>>>)>>>, client_id: u32, parser: Arc<ParserManager>, stream: TcpStream) {
         let mut client = Messenger::with_connection(stream, parser).unwrap();
 
         let oqueue = client.get_oqueue();

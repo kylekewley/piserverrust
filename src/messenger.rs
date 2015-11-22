@@ -13,22 +13,22 @@ use std::vec::Vec;
 use std::thread;
 use std::net::{TcpStream, Shutdown};
 
-use parser::Parser;
+use parser::ParserManager;
 
 use message::Message;
 const PREFIX_SIZE: usize = 4;
 
 
 #[allow(dead_code)]
-pub struct Messenger {
+pub struct Messenger<'a> {
     ostream: Arc<Mutex<TcpStream>>,
     istream: TcpStream,
     oqueue: Arc<Mutex<Vec<Message>>>,
-    parser: Arc<Parser>,
+    parser: Arc<ParserManager<'a>>,
 }
 
-impl Messenger {
-    pub fn with_connection(client: TcpStream, parser: Arc<Parser>) -> Result<Messenger> {
+impl <'a>Messenger<'a> {
+    pub fn with_connection(client: TcpStream, parser: Arc<ParserManager>) -> Result<Messenger> {
         let ostream = Arc::new(Mutex::new(try!(client.try_clone())));
         let istream = try!(client.try_clone());
         let oqueue: Arc<Mutex<Vec<Message>>> = Arc::new(Mutex::new(Vec::new()));
