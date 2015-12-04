@@ -52,7 +52,8 @@ impl <'a>ParserManager<'a> {
       * ID
       */
 
-    pub fn register_parser<T: 'a+Parser+Send+Sync>(&mut self, parser_id: u32, parser: T) -> bool {
+    pub fn register_parser<T: 'a+Parser+Send+Sync>(&mut self, parser: T) -> bool {
+        let parser_id = parser.get_id();
 
         if self.parsers.contains_key(&parser_id) {
             return false;
