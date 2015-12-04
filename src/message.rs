@@ -39,11 +39,11 @@ impl Message {
         }
     }
 
-    pub fn with_reply<T: Encodable>(message: &T, message_id: u32) -> Message {
-        let encoded_message = json::encode(&message).unwrap();
+    pub fn with_reply<T: Encodable>(reply: &T, sent_message: &Message) -> Message {
+        let encoded_message = json::encode(&reply).unwrap();
         Message {
             ack: false,
-            m_id: message_id,
+            m_id: sent_message.m_id,
             p_id: REPLY_MESSAGE_PARSER_ID,
             message: encoded_message,
         }
@@ -61,6 +61,10 @@ impl Message {
 
     pub fn get_message(&self) -> &String {
         &self.message
+    }
+
+    pub fn get_ack(&self) -> bool {
+        self.ack
     }
 
     pub fn set_ack(&mut self, ack: bool) {

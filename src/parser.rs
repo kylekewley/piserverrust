@@ -11,7 +11,8 @@ use message::Message;
 
 
 pub trait Parser {
-    fn parse_message(&self, message: &String) -> Option<Message>;
+    fn parse_message(&self, message: &Message) -> Option<Message>;
+    fn get_id(&self) -> u32;
 }
 
 pub struct ParserManager<'a> {
@@ -30,7 +31,12 @@ impl <'a>ParserManager<'a> {
 
         if f.is_some() {
             let f = f.unwrap();
-            let result = f.parse_message(message.get_message());
+            let result = f.parse_message(message);
+
+            if message.get_ack() && !result.is_some() {
+                let empty_message = ();
+                return Some(Message::with_reply(&empty_message, message));
+            }
 
             return result;
         }
